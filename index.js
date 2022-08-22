@@ -24,9 +24,32 @@ async function run() {
 
     // users profile get api
     app.get("/usersprofile", async (req, res) => {
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
+      const name = req.query.name;
       const query = {};
-      const users = await usersProflieCollection.find(query).toArray();
+      let users;
+      if (name || page || size) {
+        const allUsers = await usersProflieCollection.find(query).toArray();
+        users = allUsers.filter((user) =>
+          user.userName.toLowerCase().includes(name.toLocaleLowerCase())
+        );
+      } else if (name || page || size) {
+        users = await usersProflieCollection
+          .find(query)
+          .skip(page * size)
+          .limit(size)
+          .toArray();
+      } else {
+        users = await usersProflieCollection.find(query).toArray();
+      }
+
       res.send(users);
+    });
+    // user profile count
+    app.get("/usersprofilecount", async (req, res) => {
+      const count = await usersProflieCollection.estimatedDocumentCount();
+      res.send({ count });
     });
   } finally {
     // await client.close();
